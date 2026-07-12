@@ -1,11 +1,8 @@
 """Resource booking (Person B).
 
-Commit 3: create + list + the guard rails —
-  - asset must exist and be is_bookable
-  - asset status must not be terminal/unavailable (Under Maintenance/Lost/Retired/Disposed)
-  - the requested window must not overlap an active booking (boundary-safe)
-
-Commit 4 adds status transitions, live Reserved derivation, and cancel.
+Commit 3: create + list + guard rails (bookable? blocked status? overlap?).
+Commit 4: live status derivation, cancel (frees the slot), and the Reserved
+          asset-state derived live from the bookings table.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,12 +12,25 @@ from app.core.deps import get_current_user
 from app.database import get_db
 from app.models.asset import Asset
 from app.models.booking import Booking
-from app.models.employee import Employee
+from app.models.employee import Employee, Role
 from app.models.enums import BLOCKED_FOR_BOOKING, BookingStatus
-from app.schemas.booking import BookingCreate, BookingOut
-from app.services.booking import find_conflict
+from app.schemas.booking import AssetBookingStatusOut, BookingCreate, BookingOut
+from app.services.booking import (
+    computed_booking_status,
+    effective_asset_status,
+    find_conflict,
+)
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
+
+_CAN_CANCEL_ANY = {Role.ASSET_MANAGER.value, Role.ADMIN.value}
+
+
+def _out(booking: Booking) -> BookingOut:
+    """Serialize with the live-derived effective status alongside the stored one."""
+    out = BookingOut.model_validate(booking)
+    out.effective_status = computed_booking_status(booking)
+    return out
 
 
 @router.get("", response_model=list[BookingOut])
@@ -32,7 +42,7 @@ def list_bookings(
     q = db.query(Booking)
     if asset_id is not None:
         q = q.filter(Booking.asset_id == asset_id)
-    return q.order_by(Booking.start_time).all()
+    return [_out(b) for b in q.order_by(Booking.start_time).all()]
 
 
 @router.post("", response_model=BookingOut, status_code=status.HTTP_201_CREATED)
@@ -81,4 +91,61 @@ def create_booking(
     db.add(booking)
     db.commit()
     db.refresh(booking)
-    return booking
+    return _out(booking)
+
+
+@router.patch("/{booking_id}/cancel", response_model=BookingOut)
+def cancel_booking(
+    booking_id: int,
+    user: Employee = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancel a booking. The slot frees immediately — find_conflict ignores
+    Cancelled bookings, so a new booking can land in the freed window right away.
+    Allowed for the booker, or an Asset Manager / Admin."""
+    booking = db.get(Booking, booking_id)
+    if booking is None:
+        raise HTTPException(status_code=404, detail="Booking not found.")
+
+    if booking.booked_by_id != user.id and user.role not in _CAN_CANCEL_ANY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the booker or an Asset Manager can cancel this booking.",
+        )
+
+    if booking.status == BookingStatus.CANCELLED.value:
+        raise HTTPException(status_code=409, detail="Booking is already cancelled.")
+
+    # Can't cancel a booking whose window has already ended.
+    if computed_booking_status(booking) == BookingStatus.COMPLETED.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot cancel a completed booking.",
+        )
+
+    booking.status = BookingStatus.CANCELLED.value
+    db.commit()
+    db.refresh(booking)
+    return _out(booking)
+
+
+@router.get("/asset-statuses", response_model=list[AssetBookingStatusOut])
+def asset_booking_statuses(
+    _: Employee = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Bookable assets with their live lifecycle status — proves Reserved is
+    derived from the bookings table, not a stored flag. Powers the registry /
+    dashboard 'Reserved' badge without any drift."""
+    assets = db.query(Asset).filter(Asset.is_bookable.is_(True)).order_by(Asset.id).all()
+    return [
+        AssetBookingStatusOut(
+            asset_id=a.id,
+            name=a.name,
+            asset_tag=a.asset_tag,
+            stored_status=a.status,
+            effective_status=effective_asset_status(db, a),
+            is_bookable=a.is_bookable,
+        )
+        for a in assets
+    ]
