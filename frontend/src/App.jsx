@@ -7,6 +7,8 @@ import Signup from "./auth/Signup";
 import Placeholder from "./pages/Placeholder";
 import Maintenance from "./pages/Maintenance";
 import Booking from "./pages/Booking";
+import Notifications from "./pages/Notifications";
+import Dashboard from "./pages/Dashboard";
 
 // Public routes redirect to the app if already signed in.
 function PublicOnly({ children }) {
@@ -30,7 +32,7 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/" element={<Placeholder title="Dashboard" owner="C" />} />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/assets" element={<Placeholder title="Asset Registry" owner="C" />} />
             <Route path="/allocation" element={<Placeholder title="Allocation & Transfer" owner="A" />} />
             <Route path="/booking" element={<Booking />} />
@@ -38,7 +40,7 @@ export default function App() {
             <Route path="/audit" element={<Placeholder title="Audit" owner="A" />} />
             <Route path="/reports" element={<Placeholder title="Reports" owner="C" />} />
             <Route path="/org" element={<Placeholder title="Org Setup" owner="C" />} />
-            <Route path="/notifications" element={<Placeholder title="Notifications" owner="D" />} />
+            <Route path="/notifications" element={<Notifications />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
