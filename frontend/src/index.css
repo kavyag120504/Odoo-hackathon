@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* AssetFlow theme — dark, rounded cards, green accent (per mockup). */
+@theme {
+  --color-bg: #0f1117;
+  --color-surface: #171a21;
+  --color-surface-2: #1e222b;
+  --color-border: #2a2f3a;
+  --color-accent: #22c55e;
+  --color-accent-hover: #16a34a;
+  --color-muted: #8b93a7;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: #e5e9f0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
