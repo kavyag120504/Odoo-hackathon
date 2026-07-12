@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import Base, engine
-from app.routers import auth, booking, employees, maintenance
+from app.routers import auth, booking, employees, maintenance, allocations, transfers, returns, assets
 
 # Import models so metadata is populated before create_all.
 import app.models  # noqa: F401
@@ -35,3 +35,7 @@ app.include_router(auth.router)
 app.include_router(employees.router)
 app.include_router(booking.router)
 app.include_router(maintenance.router)
+app.include_router(allocations.router)
+app.include_router(transfers.router)
+app.include_router(returns.router)
+app.include_router(assets.router)
