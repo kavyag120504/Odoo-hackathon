@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.asset import Asset
 from app.models.allocation import Allocation
-from app.models.maintenance_log import MaintenanceLog
+from app.models.maintenance_request import MaintenanceRequest
 from app.models.employee import Employee
 from app.models.department import Department
 
@@ -21,7 +21,7 @@ def get_asset_history(asset_id: int, db: Session = Depends(get_db)):
     allocations = db.query(Allocation).filter(Allocation.asset_id == asset_id).all()
     
     # Fetch Maintenance Logs
-    maintenance_logs = db.query(MaintenanceLog).filter(MaintenanceLog.asset_id == asset_id).all()
+    maintenance_logs = db.query(MaintenanceRequest).filter(MaintenanceRequest.asset_id == asset_id).all()
 
     # We need a unified feed, so we will combine them into a list of dicts and sort by date
     history = []
@@ -53,7 +53,7 @@ def get_asset_history(asset_id: int, db: Session = Depends(get_db)):
     for log in maintenance_logs:
         history.append({
             "type": "MAINTENANCE",
-            "date": log.maintenance_date,
+            "date": log.created_at,
             "details": log.description,
             "status": log.status
         })
