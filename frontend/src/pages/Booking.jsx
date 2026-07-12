@@ -34,6 +34,9 @@ export default function Booking() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busyHour, setBusyHour] = useState(null);
+  const [rangeStart, setRangeStart] = useState(`${todayISO()}T09:00`);
+  const [rangeEnd, setRangeEnd] = useState(`${todayISO()}T11:00`);
+  const [rangeBusy, setRangeBusy] = useState(false);
 
   const selected = assets.find((a) => a.asset_id === selectedId) || null;
 
@@ -106,6 +109,36 @@ export default function Booking() {
       setNotice("Booking cancelled — slot is free again.");
       await Promise.all([loadBookings(selectedId), loadAssets()]);
     } else setError(res.error);
+  }
+
+  // Custom range booking — lets you request any window (so overlap/boundary
+  // rejection is demoable directly in the UI, not just the grid's 1-hour slots).
+  async function bookRange() {
+    setError("");
+    setNotice("");
+    if (!selected) return;
+    if (rangeStart >= rangeEnd) {
+      setError("End time must be after start time.");
+      return;
+    }
+    setRangeBusy(true);
+    const res = await api("/bookings", {
+      method: "POST",
+      body: {
+        asset_id: selectedId,
+        start_time: rangeStart,
+        end_time: rangeEnd,
+        purpose: "Custom range booking",
+      },
+    });
+    setRangeBusy(false);
+    if (res.ok) {
+      setNotice(`Booked ${rangeStart.slice(11)}–${rangeEnd.slice(11)}.`);
+      if (rangeStart.slice(0, 10) !== date) setDate(rangeStart.slice(0, 10));
+      await Promise.all([loadBookings(selectedId), loadAssets()]);
+    } else {
+      setError(res.error); // e.g. "Conflict — slot is unavailable (...)"
+    }
   }
 
   return (
@@ -182,6 +215,39 @@ export default function Booking() {
               {notice}
             </div>
           )}
+
+          {/* Custom range — request any window; overlap/boundary rejection shows
+              inline above, exactly like the grid. */}
+          <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3">
+            <label className="text-xs text-[var(--color-muted)]">
+              <span className="mb-1 block">Start</span>
+              <input
+                type="datetime-local"
+                value={rangeStart}
+                onChange={(e) => setRangeStart(e.target.value)}
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm text-white outline-none focus:border-[var(--color-accent)]"
+              />
+            </label>
+            <label className="text-xs text-[var(--color-muted)]">
+              <span className="mb-1 block">End</span>
+              <input
+                type="datetime-local"
+                value={rangeEnd}
+                onChange={(e) => setRangeEnd(e.target.value)}
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm text-white outline-none focus:border-[var(--color-accent)]"
+              />
+            </label>
+            <button
+              onClick={bookRange}
+              disabled={rangeBusy || !selected}
+              className="rounded-lg bg-[var(--color-accent)] px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-[var(--color-accent-hover)] disabled:opacity-50"
+            >
+              {rangeBusy ? "Booking…" : "Book range"}
+            </button>
+            <span className="text-xs text-[var(--color-muted)]">
+              Try an overlapping window to see the conflict rejected inline.
+            </span>
+          </div>
 
           <div className="space-y-1.5">
             {HOURS.map((hour) => {
