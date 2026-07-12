@@ -28,6 +28,15 @@ class AssetStatus(str, enum.Enum):
     DISPOSED = "Disposed"
 
 
+# (Person B / Booking) Statuses that block a new booking regardless of slot.
+BLOCKED_FOR_BOOKING = {
+    AssetStatus.UNDER_MAINTENANCE.value,
+    AssetStatus.LOST.value,
+    AssetStatus.RETIRED.value,
+    AssetStatus.DISPOSED.value,
+}
+
+
 class AllocationStatus(str, enum.Enum):
     ACTIVE = "Active"
     RETURNED = "Returned"
@@ -49,6 +58,11 @@ class BookingStatus(str, enum.Enum):
     ONGOING = "Ongoing"
     COMPLETED = "Completed"
     CANCELLED = "Cancelled"
+
+
+# (Person B / Booking) Bookings in these states hold a slot (block overlaps).
+# Completed/Cancelled free the slot so it's immediately re-bookable.
+ACTIVE_BOOKING_STATUSES = {BookingStatus.UPCOMING.value, BookingStatus.ONGOING.value}
 
 
 class MaintenancePriority(str, enum.Enum):
