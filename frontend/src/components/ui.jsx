@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { THEME } from "../data/theme";
 
 export function Card({ children, style, className = "" }) {
@@ -95,3 +96,32 @@ export const inputStyle = {
 };
 
 export const inputClass = "rounded-xl px-3 py-2 text-sm outline-none focus:ring-2";
+
+export function ErrorBanner({ message, onDismiss }) {
+  if (!message) return null;
+  return (
+    <div
+      className="mb-4 flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium"
+      style={{
+        backgroundColor: `${THEME.danger}22`,
+        color: THEME.danger,
+        border: `1px solid ${THEME.danger}55`,
+      }}
+    >
+      <span>{message}</span>
+      <button onClick={onDismiss} className="hover:opacity-70">
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
+export function LoadingBlock() {
+  return (
+    <div className="flex justify-center p-8">
+      <span className="text-sm font-medium" style={{ color: THEME.sand }}>
+        Loading...
+      </span>
+    </div>
+  );
+}
