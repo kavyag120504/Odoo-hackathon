@@ -1,120 +1,217 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
+import { useNavigate } from "react-router-dom";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ArrowRightLeft,
+  Clock,
+  CalendarClock,
+  ShieldCheck,
+  Boxes,
+  Bell
+} from "lucide-react";
+import { THEME, fontImport } from "../data/theme";
+import { Card, PrimaryButton, GhostButton, Pill, LoadingBlock, timeAgo } from "../components/ui";
 import { getDashboardSummary } from "../api/dashboard";
-import { Badge, Banner, Card, EmptyState, Spinner, timeAgo } from "../components/ui";
-
-const STATUS_TONE = {
-  Available: "accent",
-  Allocated: "info",
-  Reserved: "info",
-  "Under Maintenance": "warning",
-  Lost: "danger",
-  Retired: "neutral",
-  Disposed: "neutral",
-};
-
-const QUICK_ACTIONS = [
-  { to: "/maintenance", icon: "🔧", label: "Maintenance board" },
-  { to: "/booking", icon: "📅", label: "Book a resource" },
-  { to: "/notifications", icon: "🔔", label: "Notifications" },
-];
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     getDashboardSummary().then((res) => {
-      if (res.ok) setSummary(res.data);
-      else setError(res.error);
+      if (res.ok) {
+        setSummary(res.data);
+      } else {
+        setError(res.error);
+      }
+      setLoading(false);
     });
   }, []);
 
+  if (loading) {
+    return <LoadingBlock label="Loading summary..." />;
+  }
+
+  const overdueCount = summary?.overdue_allocations || 0;
+
+  const cards = summary ? [
+    { label: "Total Assets", value: summary.assets_total, icon: Boxes },
+    { 
+      label: "Active Allocations", 
+      value: summary.active_allocations, 
+      icon: ArrowRightLeft,
+      alert: overdueCount > 0 ? `${overdueCount} overdue` : null 
+    },
+    { label: "Upcoming Bookings", value: summary.upcoming_bookings, icon: CalendarClock },
+    { label: "Ongoing Bookings", value: summary.ongoing_bookings, icon: Clock },
+    { label: "Open Maintenance", value: summary.open_maintenance, icon: AlertTriangle },
+    { label: "Unread Notifications", value: summary.unread_notifications, icon: Bell },
+  ] : [];
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Welcome back, {user?.name?.split(" ")[0] || "there"}</h1>
-      <p className="mt-1 text-sm text-[var(--color-muted)]">Here's what's happening across AssetFlow.</p>
+    <div className="flex flex-col gap-6">
+      <style>{fontImport}</style>
+      <div>
+        <h1
+          className="text-3xl font-semibold"
+          style={{ fontFamily: "'Playfair Display', serif", color: THEME.white }}
+        >
+          Operational Overview
+        </h1>
+        <p className="mt-1 text-sm" style={{ color: THEME.soft }}>
+          A real-time snapshot of every asset and resource across the organization.
+        </p>
+      </div>
 
       {error && (
-        <div className="mt-4">
-          <Banner onDismiss={() => setError("")}>{error}</Banner>
+        <div
+          className="flex items-center gap-3 rounded-2xl px-5 py-4"
+          style={{ backgroundColor: `${THEME.danger}1A`, border: `1px solid ${THEME.danger}55` }}
+        >
+          <AlertTriangle size={20} color={THEME.danger} />
+          <p className="text-sm" style={{ color: THEME.soft }}>
+            Error fetching dashboard data: {error}
+          </p>
         </div>
       )}
 
-      {!summary && !error && (
-        <div className="mt-10 flex justify-center">
-          <Spinner />
+      {overdueCount > 0 && (
+        <div
+          className="flex items-center gap-3 rounded-2xl px-5 py-4"
+          style={{ backgroundColor: `${THEME.danger}1A`, border: `1px solid ${THEME.danger}55` }}
+        >
+          <AlertTriangle size={20} color={THEME.danger} />
+          <p className="text-sm" style={{ color: THEME.soft }}>
+            <span className="font-semibold" style={{ color: THEME.white }}>
+              {overdueCount} overdue return{overdueCount > 1 ? "s" : ""}
+            </span>{" "}
+            — There are active asset allocations past their expected return date.
+          </p>
         </div>
       )}
 
       {summary && (
         <>
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            <KpiCard label="Total Assets" value={summary.assets_total} icon="📦" />
-            <KpiCard
-              label="Active Allocations"
-              value={summary.active_allocations}
-              icon="🤝"
-              alert={summary.overdue_allocations > 0 ? `${summary.overdue_allocations} overdue` : null}
-            />
-            <KpiCard label="Upcoming Bookings" value={summary.upcoming_bookings} icon="📅" />
-            <KpiCard label="Ongoing Bookings" value={summary.ongoing_bookings} icon="⏱️" />
-            <KpiCard label="Open Maintenance" value={summary.open_maintenance} icon="🔧" />
-            <KpiCard label="Unread Notifications" value={summary.unread_notifications} icon="🔔" />
+          {/* KPI Cards Grid */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {cards.map((c) => (
+              <Card key={c.label}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide" style={{ color: THEME.sand }}>
+                      {c.label}
+                    </p>
+                    <p
+                      className="mt-2 text-3xl font-semibold"
+                      style={{ fontFamily: "'Playfair Display', serif", color: THEME.white }}
+                    >
+                      {c.value}
+                    </p>
+                    {c.alert && (
+                      <span className="mt-1 inline-block text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${THEME.danger}22`, color: THEME.danger, border: `1px solid ${THEME.danger}55` }}>
+                        {c.alert}
+                      </span>
+                    )}
+                  </div>
+                  <div className="rounded-xl p-2" style={{ backgroundColor: `${THEME.sand}1A` }}>
+                    <c.icon size={18} color={THEME.sand} />
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <h2 className="mb-4 text-sm font-semibold">Assets by status</h2>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(summary.assets_by_status).map(([status, count]) => (
-                  <Badge key={status} tone={STATUS_TONE[status] || "neutral"}>
-                    {status}: {count}
-                  </Badge>
-                ))}
-              </div>
-
-              <h2 className="mb-3 mt-6 text-sm font-semibold">Maintenance by stage</h2>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(summary.maintenance_by_status).length === 0 ? (
-                  <p className="text-sm text-[var(--color-muted)]">No maintenance requests yet.</p>
-                ) : (
-                  Object.entries(summary.maintenance_by_status).map(([status, count]) => (
-                    <Badge key={status}>{status}: {count}</Badge>
-                  ))
-                )}
-              </div>
-
-              <h2 className="mb-3 mt-6 text-sm font-semibold">Quick actions</h2>
-              <div className="flex flex-wrap gap-3">
-                {QUICK_ACTIONS.map((a) => (
-                  <Link
-                    key={a.to}
-                    to={a.to}
-                    className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm transition-colors hover:border-[var(--color-accent)] hover:text-white"
-                  >
-                    <span>{a.icon}</span>
-                    {a.label}
-                  </Link>
-                ))}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {/* Quick Actions */}
+            <Card className="lg:col-span-1 flex flex-col justify-between">
+              <div>
+                <h3
+                  className="mb-4 text-sm font-semibold uppercase tracking-wide"
+                  style={{ color: THEME.sand }}
+                >
+                  Quick actions
+                </h3>
+                <div className="flex flex-col gap-3">
+                  <PrimaryButton onClick={() => navigate("/assets")}>Register Asset</PrimaryButton>
+                  <GhostButton onClick={() => navigate("/booking")}>Book Resource</GhostButton>
+                  <GhostButton onClick={() => navigate("/maintenance")}>
+                    Maintenance board
+                  </GhostButton>
+                </div>
               </div>
             </Card>
 
-            <Card>
-              <h2 className="mb-4 text-sm font-semibold">Recent activity</h2>
+            {/* Assets & Maintenance Breakdown */}
+            <Card className="lg:col-span-1">
+              <h3
+                className="mb-4 text-sm font-semibold uppercase tracking-wide"
+                style={{ color: THEME.sand }}
+              >
+                Assets & Maintenance
+              </h3>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h4 className="text-xs font-semibold mb-2" style={{ color: THEME.soft }}>Assets by Status</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(summary.assets_by_status).map(([status, count]) => (
+                      <Pill key={status} tone={
+                        status === "Available" ? "success" :
+                        status === "Under Maintenance" || status === "Lost" ? "danger" : "sand"
+                      }>
+                        {status}: {count}
+                      </Pill>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold mb-2" style={{ color: THEME.soft }}>Maintenance by Stage</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(summary.maintenance_by_status).length === 0 ? (
+                      <p className="text-xs" style={{ color: `${THEME.soft}88` }}>No maintenance requests.</p>
+                    ) : (
+                      Object.entries(summary.maintenance_by_status).map(([stage, count]) => (
+                        <Pill key={stage} tone="sand">
+                          {stage}: {count}
+                        </Pill>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Recent Activity */}
+            <Card className="lg:col-span-1">
+              <h3
+                className="mb-4 text-sm font-semibold uppercase tracking-wide"
+                style={{ color: THEME.sand }}
+              >
+                Recent activity
+              </h3>
               {summary.recent_activity.length === 0 ? (
-                <EmptyState icon="📜" title="No activity yet" />
+                <p className="text-sm" style={{ color: `${THEME.soft}88` }}>
+                  No activity yet.
+                </p>
               ) : (
-                <ul className="space-y-3">
+                <ul className="flex flex-col gap-3 max-h-[220px] overflow-y-auto pr-1">
                   {summary.recent_activity.map((e) => (
-                    <li key={e.id} className="text-sm">
-                      <p>
-                        <span className="font-medium">{e.actor_name || "System"}</span>{" "}
-                        <span className="text-[var(--color-muted)]">{e.action}</span>
-                      </p>
-                      <p className="text-xs text-[var(--color-muted)]">{timeAgo(e.timestamp)}</p>
+                    <li key={e.id} className="flex flex-col text-sm border-b pb-2" style={{ borderColor: `${THEME.bronze}22` }}>
+                      <span style={{ color: THEME.soft }}>
+                        <span className="font-semibold" style={{ color: THEME.white }}>
+                          {e.actor_name || "System"}
+                        </span>{" "}
+                        {e.action}{" "}
+                        {e.details && <span style={{ color: THEME.sand }}>({e.details})</span>}
+                      </span>
+                      <span
+                        className="text-xs mt-0.5"
+                        style={{ color: `${THEME.soft}88` }}
+                      >
+                        {timeAgo(e.timestamp)}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -124,18 +221,5 @@ export default function Dashboard() {
         </>
       )}
     </div>
-  );
-}
-
-function KpiCard({ label, value, icon, alert }) {
-  return (
-    <Card className="!p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xl">{icon}</span>
-        {alert && <Badge tone="danger">{alert}</Badge>}
-      </div>
-      <p className="mt-3 text-2xl font-semibold">{value}</p>
-      <p className="text-xs text-[var(--color-muted)]">{label}</p>
-    </Card>
   );
 }
