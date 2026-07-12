@@ -39,7 +39,7 @@ const NEXT_STATUS = {
 };
 
 const PRIORITY_TONE = { Low: "info", Medium: "warning", High: "danger" };
-const PRIORITY_BORDER = { Low: "border-l-sky-400", Medium: "border-l-amber-400", High: "border-l-red-400" };
+const PRIORITY_BORDER = { Low: "border-l-[var(--color-info)]", Medium: "border-l-[var(--color-warning)]", High: "border-l-[var(--color-danger)]" };
 
 export default function Maintenance() {
   const { user } = useAuth();

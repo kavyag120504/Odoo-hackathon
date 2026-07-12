@@ -51,7 +51,7 @@ export default function Signup() {
         <p className="rounded-lg bg-[var(--color-surface-2)] px-3 py-2 text-xs text-[var(--color-muted)]">
           Sign up creates an employee account. Admin roles are assigned later.
         </p>
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
         <button
           type="submit"
           disabled={busy}

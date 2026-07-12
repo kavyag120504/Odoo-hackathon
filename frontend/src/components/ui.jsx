@@ -16,9 +16,9 @@ export function Card({ children, className = "", style }) {
 const BADGE_TONES = {
   neutral: "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-muted)]",
   accent: "border-[var(--color-accent)]/40 bg-[var(--color-accent)]/15 text-[var(--color-accent)]",
-  info: "border-sky-400/40 bg-sky-400/15 text-sky-400",
-  warning: "border-amber-400/40 bg-amber-400/15 text-amber-400",
-  danger: "border-red-400/40 bg-red-400/15 text-red-400",
+  info: "border-[var(--color-info)]/40 bg-[var(--color-info)]/15 text-[var(--color-info)]",
+  warning: "border-[var(--color-warning)]/40 bg-[var(--color-warning)]/15 text-[var(--color-warning)]",
+  danger: "border-[var(--color-danger)]/40 bg-[var(--color-danger)]/15 text-[var(--color-danger)]",
 };
 
 export function Badge({ children, tone = "neutral", className = "" }) {

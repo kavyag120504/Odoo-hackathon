@@ -1,14 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-/* AssetFlow theme — dark, rounded cards, green accent (per mockup). */
+/* AssetFlow theme — navy/sand/bronze dark palette */
 @theme {
-  --color-bg: #0f1117;
-  --color-surface: #171a21;
-  --color-surface-2: #1e222b;
-  --color-border: #2a2f3a;
-  --color-accent: #22c55e;
-  --color-accent-hover: #16a34a;
-  --color-muted: #8b93a7;
+  --color-bg: #0F1E3F;
+  --color-surface: #213A56;
+  --color-surface-2: #0F1E3F;
+  --color-border: #997953;
+  --color-accent: #CDAA80;
+  --color-accent-hover: #997953;
+  --color-muted: #EAEAEA;
+  --color-success: #7FA98B;
+  --color-danger: #C2685A;
+  --color-warning: #D9A05B;
+  --color-info: #5C8CA8;
 }
 
 html,
@@ -18,7 +23,23 @@ body,
 }
 
 body {
-  background-color: var(--color-bg);
-  color: #e5e9f0;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: #0F1E3F;
+  color: #FFFFFF;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0F1E3F;
+}
+::-webkit-scrollbar-thumb {
+  background: #997953;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #CDAA80;
 }

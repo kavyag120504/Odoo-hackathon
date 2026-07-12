@@ -20,8 +20,8 @@ function slotEnd(date, hour) {
 }
 
 const STATUS_STYLES = {
-  Upcoming: "bg-accent/15 text-accent border-accent/40",
-  Ongoing: "bg-emerald-500/20 text-emerald-300 border-emerald-500/50",
+  Upcoming: "bg-[var(--color-accent)]/15 text-[var(--color-accent)] border-[var(--color-accent)]/40",
+  Ongoing: "bg-[var(--color-success)]/15 text-[var(--color-success)] border-[var(--color-success)]/40",
   Completed: "bg-[var(--color-surface-2)] text-[var(--color-muted)] border-[var(--color-border)]",
 };
 
@@ -298,10 +298,10 @@ export default function Booking() {
 
 function StatusDot({ status }) {
   const map = {
-    Available: "bg-[var(--color-muted)]",
-    Reserved: "bg-accent",
-    "Under Maintenance": "bg-amber-400",
-    Allocated: "bg-blue-400",
+    Available: "bg-[var(--color-success)]",
+    Reserved: "bg-[var(--color-accent)]",
+    "Under Maintenance": "bg-[var(--color-danger)]",
+    Allocated: "bg-[var(--color-info)]",
   };
   return (
     <span className="flex items-center gap-1 text-xs">

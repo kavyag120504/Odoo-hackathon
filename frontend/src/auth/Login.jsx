@@ -29,7 +29,7 @@ export default function Login() {
       <form onSubmit={onSubmit} className="space-y-4">
         <Field label="Email" type="email" value={email} onChange={setEmail} autoFocus />
         <Field label="Password" type="password" value={password} onChange={setPassword} />
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
         <button
           type="submit"
           disabled={busy}
