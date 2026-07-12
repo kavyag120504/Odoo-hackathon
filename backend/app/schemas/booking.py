@@ -24,6 +24,18 @@ class BookingOut(BaseModel):
     booked_by_id: int | None
     start_time: datetime
     end_time: datetime
-    status: str
+    status: str  # stored status (Upcoming / Cancelled)
+    effective_status: str | None = None  # live-derived (Upcoming/Ongoing/Completed/Cancelled)
     purpose: str | None
     created_at: datetime | None = None
+
+
+class AssetBookingStatusOut(BaseModel):
+    """Demonstrates the live Reserved derivation for a bookable asset."""
+
+    asset_id: int
+    name: str
+    asset_tag: str
+    stored_status: str
+    effective_status: str  # 'Reserved' when an active booking exists
+    is_bookable: bool
