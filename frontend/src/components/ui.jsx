@@ -1,11 +1,12 @@
-// Shared UI atoms (Person D). Small, dependency-free, built on the same
-// CSS variables as the rest of the app (see index.css) so Maintenance,
-// Notifications and Dashboard read as one system instead of three.
+import { X } from "lucide-react";
+import { THEME } from "../data/theme";
 
-export function Card({ children, className = "" }) {
+// Shared UI atoms
+export function Card({ children, className = "", style }) {
   return (
     <div
       className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 ${className}`}
+      style={style}
     >
       {children}
     </div>
@@ -132,7 +133,6 @@ export function Banner({ tone = "danger", children, onDismiss }) {
   );
 }
 
-// Lightweight "3h ago" formatter — no date-fns dependency for one function.
 export function timeAgo(isoString) {
   const then = new Date(isoString).getTime();
   const diffSec = Math.max(0, Math.floor((Date.now() - then) / 1000));
@@ -144,4 +144,111 @@ export function timeAgo(isoString) {
   const diffDay = Math.floor(diffHr / 24);
   if (diffDay < 30) return `${diffDay}d ago`;
   return new Date(isoString).toLocaleDateString();
+}
+
+// ---------------------------------------------------------
+// Vanshika's Branch additions (Merged)
+// ---------------------------------------------------------
+
+export function Pill({ children, tone = "sand" }) {
+  const bg =
+    tone === "sand"
+      ? THEME.sand
+      : tone === "danger"
+      ? THEME.danger
+      : tone === "success"
+      ? THEME.success
+      : THEME.bronze;
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
+      style={{ backgroundColor: `${bg}22`, color: bg, border: `1px solid ${bg}55` }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function StatusPill({ status }) {
+  const map = {
+    Available: "success",
+    Allocated: "sand",
+    Reserved: "sand",
+    "Under Maintenance": "danger",
+    Lost: "danger",
+    Retired: "bronze",
+    Disposed: "bronze",
+  };
+  return <Pill tone={map[status] || "bronze"}>{status}</Pill>;
+}
+
+export function PrimaryButton({ children, onClick, type = "button", style, disabled = false }) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-2xl px-5 py-2.5 text-sm font-semibold transition-all duration-300 disabled:opacity-50"
+      style={{ backgroundColor: THEME.sand, color: THEME.navy, ...style }}
+      onMouseEnter={(e) => { if(!disabled) e.currentTarget.style.backgroundColor = THEME.bronze; }}
+      onMouseLeave={(e) => { if(!disabled) e.currentTarget.style.backgroundColor = THEME.sand; }}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function GhostButton({ children, onClick, style, disabled = false }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-2xl px-4 py-2 text-sm font-medium transition-all duration-300 disabled:opacity-50"
+      style={{
+        backgroundColor: "transparent",
+        color: THEME.soft,
+        border: `1px solid ${THEME.bronze}66`,
+        ...style,
+      }}
+      onMouseEnter={(e) => { if(!disabled) e.currentTarget.style.borderColor = THEME.sand; }}
+      onMouseLeave={(e) => { if(!disabled) e.currentTarget.style.borderColor = `${THEME.bronze}66`; }}
+    >
+      {children}
+    </button>
+  );
+}
+
+export const inputStyle = {
+  backgroundColor: THEME.navy,
+  color: THEME.white,
+  border: `1px solid ${THEME.bronze}55`,
+};
+
+export function ErrorBanner({ message, onDismiss }) {
+  if (!message) return null;
+  return (
+    <div
+      className="mb-4 flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium"
+      style={{
+        backgroundColor: `${THEME.danger}22`,
+        color: THEME.danger,
+        border: `1px solid ${THEME.danger}55`,
+      }}
+    >
+      <span>{message}</span>
+      <button onClick={onDismiss} className="hover:opacity-70">
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
+export function LoadingBlock({ label = "Loading..." }) {
+  return (
+    <div className="flex justify-center p-8">
+      <span className="text-sm font-medium" style={{ color: THEME.sand }}>
+        {label}
+      </span>
+    </div>
+  );
 }
