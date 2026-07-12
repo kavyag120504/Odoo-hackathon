@@ -57,8 +57,59 @@ def run():
         db.commit()
         print(f"Seeded {len(people)} employees across 2 departments.")
         print(f"All demo passwords: {DEMO_PASSWORD!r}")
+
+        _seed_bookable_assets(db)
     finally:
         db.close()
+
+
+def _seed_bookable_assets(db):
+    """A few resources so Booking (Person B) is demoable with WORKING logins.
+    Matches Person A's Asset schema: category_id (required) + qr_code (required,
+    unique). Idempotent + collision-safe via the BR-* tag range (won't clash
+    with A's AF-0001 sequence)."""
+    from app.models.asset import Asset
+    from app.models.asset_category import AssetCategory
+    from app.models.enums import AssetStatus
+
+    # A's Asset.category_id is NOT NULL (FK RESTRICT) — ensure a category exists.
+    category = (
+        db.query(AssetCategory).filter(AssetCategory.name == "Bookable Resources").first()
+    )
+    if category is None:
+        category = AssetCategory(name="Bookable Resources", custom_fields="{}")
+        db.add(category)
+        db.flush()
+
+    # (name, asset_tag, qr_code, status, is_bookable)
+    demo = [
+        ("Conference Room A", "BR-001", "QR-BR-001", AssetStatus.AVAILABLE, True),
+        ("Projector Epson X", "BR-002", "QR-BR-002", AssetStatus.AVAILABLE, True),
+        ("Company Van", "BR-003", "QR-BR-003", AssetStatus.AVAILABLE, True),
+        # Bookable but Under Maintenance -> booking must be blocked by status.
+        ("DSLR Camera", "BR-004", "QR-BR-004", AssetStatus.UNDER_MAINTENANCE, True),
+        # Available but NOT bookable -> booking must be blocked by is_bookable.
+        ("Staff Laptop", "BR-005", "QR-BR-005", AssetStatus.AVAILABLE, False),
+    ]
+    existing = {a.asset_tag for a in db.query(Asset).all()}
+    added = 0
+    for name, tag, qr, st, bookable in demo:
+        if tag in existing:
+            continue
+        db.add(
+            Asset(
+                name=name,
+                asset_tag=tag,
+                qr_code=qr,
+                category_id=category.id,
+                status=st.value,
+                is_bookable=bookable,
+            )
+        )
+        added += 1
+    db.commit()
+    if added:
+        print(f"Seeded {added} demo assets (3 bookable, 1 under-maintenance, 1 non-bookable).")
 
 
 if __name__ == "__main__":
