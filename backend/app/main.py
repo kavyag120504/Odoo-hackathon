@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import Base, engine
-from app.routers import auth, employees
+from app.routers import auth, employees, allocations
 
 # Import models so metadata is populated before create_all.
 import app.models  # noqa: F401
@@ -33,3 +33,4 @@ def health():
 
 app.include_router(auth.router)
 app.include_router(employees.router)
+app.include_router(allocations.router)
