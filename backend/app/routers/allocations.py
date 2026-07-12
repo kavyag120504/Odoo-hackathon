@@ -10,7 +10,7 @@ from app.models.department import Department
 from app.models.enums import AssetStatus, AllocationStatus
 from app.schemas.allocation import AllocationCreate, AllocationResponse
 
-router = APIRouter(prefix="/api/allocations", tags=["Allocations"])
+router = APIRouter(prefix="/allocations", tags=["Allocations"])
 
 @router.post("", response_model=AllocationResponse, status_code=status.HTTP_201_CREATED)
 def allocate_asset(allocation_in: AllocationCreate, db: Session = Depends(get_db)):

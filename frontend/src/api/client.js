@@ -12,11 +12,21 @@ export function setToken(token) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
-export async function api(path, { method = "GET", body, auth = true } = {}) {
+export async function api(path, { method = "GET", body, auth = true, params } = {}) {
   const headers = { "Content-Type": "application/json" };
   if (auth) {
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Append query params (used by asset search/filter), skipping empty values.
+  if (params && typeof params === "object") {
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== "") qs.append(k, v);
+    }
+    const s = qs.toString();
+    if (s) path += (path.includes("?") ? "&" : "?") + s;
   }
 
   let res;

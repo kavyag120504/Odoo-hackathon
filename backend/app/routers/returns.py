@@ -10,7 +10,7 @@ from app.models.return_request import ReturnRequest
 from app.models.enums import AssetStatus, AllocationStatus, ReturnStatus, Role
 from app.schemas.return_req import ReturnRequestCreate, ReturnRequestResponse, ReturnApprove
 
-router = APIRouter(prefix="/api/returns", tags=["Returns"])
+router = APIRouter(prefix="/returns", tags=["Returns"])
 
 @router.post("", response_model=ReturnRequestResponse, status_code=status.HTTP_201_CREATED)
 def initiate_return(return_in: ReturnRequestCreate, db: Session = Depends(get_db)):

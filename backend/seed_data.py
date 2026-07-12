@@ -7,6 +7,7 @@ import random
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database import SessionLocal, engine, Base
+import app.models  # noqa: F401 — registers ALL tables so create_all is complete
 from app.models.department import Department
 from app.models.employee import Employee
 from app.models.asset_category import AssetCategory
@@ -16,9 +17,18 @@ from app.models.booking import Booking
 from app.models.enums import Role, UserStatus, AssetStatus, AllocationStatus, BookingStatus
 
 def seed_data():
+    # Ensure tables exist so this runs standalone on a fresh DB (was crashing
+    # with "no such table" when run before anything else created the schema).
+    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
-    
+
     try:
+        # Idempotent: skip if the demo data already exists (avoids UniqueViolation
+        # on a second run — e.g. against a persistent Postgres/Neon DB).
+        if db.query(Asset).filter(Asset.asset_tag == "AF-1001").first():
+            print("seed_data skipped: demo data already exists.")
+            return
+
         # 1. Create Departments
         it_dept = Department(name="IT Department")
         hr_dept = Department(name="HR Department")

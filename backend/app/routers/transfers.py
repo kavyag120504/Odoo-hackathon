@@ -10,7 +10,7 @@ from app.models.transfer_request import TransferRequest
 from app.models.enums import AssetStatus, AllocationStatus, TransferStatus, Role
 from app.schemas.transfer import TransferRequestCreate, TransferRequestResponse, TransferApprove
 
-router = APIRouter(prefix="/api/transfers", tags=["Transfers"])
+router = APIRouter(prefix="/transfers", tags=["Transfers"])
 
 @router.post("", response_model=TransferRequestResponse, status_code=status.HTTP_201_CREATED)
 def create_transfer_request(transfer_in: TransferRequestCreate, db: Session = Depends(get_db)):

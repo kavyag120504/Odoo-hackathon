@@ -9,10 +9,40 @@ from app.models.allocation import Allocation
 from app.models.maintenance_request import MaintenanceRequest
 from app.models.employee import Employee
 from app.models.department import Department
-from app.models.enums import AllocationStatus
-from app.schemas.asset import AssetResponse
+from app.models.asset_category import AssetCategory
+from app.models.enums import AllocationStatus, AssetStatus
+from app.schemas.asset import AssetCreate, AssetResponse
 
-router = APIRouter(prefix="/api/assets", tags=["Assets"])
+router = APIRouter(prefix="/assets", tags=["Assets"])
+
+
+@router.post("", response_model=AssetResponse, status_code=status.HTTP_201_CREATED)
+def create_asset(payload: AssetCreate, db: Session = Depends(get_db)):
+    """Register an asset. asset_tag (AF-####) and qr_code are auto-generated
+    server-side and unique — clients never supply them (per spec)."""
+    if db.get(AssetCategory, payload.category_id) is None:
+        raise HTTPException(status_code=400, detail="Category not found.")
+
+    asset = Asset(
+        name=payload.name,
+        category_id=payload.category_id,
+        serial_number=payload.serial_number,
+        acquisition_date=payload.acquisition_date,
+        acquisition_cost=payload.acquisition_cost,
+        condition=payload.condition,
+        location=payload.location,
+        is_bookable=payload.is_bookable,
+        status=AssetStatus.AVAILABLE.value,
+        asset_tag="",  # placeholder; set from id after flush
+        qr_code="",
+    )
+    db.add(asset)
+    db.flush()  # assigns id
+    asset.asset_tag = f"AF-{asset.id:04d}"
+    asset.qr_code = f"QR-{asset.id:04d}"
+    db.commit()
+    db.refresh(asset)
+    return asset
 
 @router.get("", response_model=List[AssetResponse])
 def get_assets(

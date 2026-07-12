@@ -15,18 +15,25 @@ from app.models.employee import Employee, Role, UserStatus
 DEMO_PASSWORD = "password123"
 
 
+def _get_or_create_department(db, name):
+    dept = db.query(Department).filter(Department.name == name).first()
+    if dept is None:
+        dept = Department(name=name)
+        db.add(dept)
+        db.flush()
+    return dept
+
+
 def run():
+    """Idempotent — safe to run any number of times, in ANY order relative to
+    seed_data.py. It always ensures the working @assetflow.dev demo logins exist
+    (creating them if missing, resetting the password if present), so login
+    never breaks because another seed ran first."""
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        if db.query(Employee).count() > 0:
-            print("Seed skipped: employees already exist.")
-            return
-
-        eng = Department(name="Engineering")
-        ops = Department(name="Operations")
-        db.add_all([eng, ops])
-        db.flush()  # assign ids
+        eng = _get_or_create_department(db, "Engineering")
+        ops = _get_or_create_department(db, "Operations")
 
         people = [
             ("Admin User", "admin@assetflow.dev", Role.ADMIN, eng),
@@ -36,26 +43,25 @@ def run():
             ("Employee One", "emp1@assetflow.dev", Role.EMPLOYEE, eng),
             ("Employee Two", "emp2@assetflow.dev", Role.EMPLOYEE, ops),
         ]
-        created = []
+        by_email = {}
         for name, email, role, dept in people:
-            e = Employee(
-                name=name,
-                email=email,
-                password_hash=hash_password(DEMO_PASSWORD),
-                role=role.value,
-                department_id=dept.id,
-                status=UserStatus.ACTIVE.value,
-            )
-            db.add(e)
-            created.append(e)
-        db.flush()
+            e = db.query(Employee).filter(Employee.email == email).first()
+            if e is None:
+                e = Employee(name=name, email=email, department_id=dept.id)
+                db.add(e)
+            # Always (re)set password + role so login is guaranteed to work.
+            e.password_hash = hash_password(DEMO_PASSWORD)
+            e.role = role.value
+            e.status = UserStatus.ACTIVE.value
+            db.flush()
+            by_email[email] = e
 
-        # Wire department heads.
-        eng.head_id = created[2].id
-        ops.head_id = created[3].id
+        # Wire department heads (idempotent).
+        eng.head_id = by_email["heada@assetflow.dev"].id
+        ops.head_id = by_email["headb@assetflow.dev"].id
 
         db.commit()
-        print(f"Seeded {len(people)} employees across 2 departments.")
+        print(f"Ensured {len(people)} demo logins across 2 departments.")
         print(f"All demo passwords: {DEMO_PASSWORD!r}")
 
         _seed_bookable_assets(db)

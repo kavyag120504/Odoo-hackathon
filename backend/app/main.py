@@ -9,7 +9,9 @@ from app.routers import (
     assets,
     auth,
     booking,
+    categories,
     dashboard,
+    departments,
     employees,
     maintenance,
     notifications,
@@ -54,3 +56,5 @@ app.include_router(assets.router)
 app.include_router(notifications.router)
 app.include_router(activity_log.router)
 app.include_router(dashboard.router)
+app.include_router(departments.router)
+app.include_router(categories.router)
