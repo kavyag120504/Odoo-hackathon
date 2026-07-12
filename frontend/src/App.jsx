@@ -5,6 +5,7 @@ import AppShell from "./layout/AppShell";
 import Login from "./auth/Login";
 import Signup from "./auth/Signup";
 import Placeholder from "./pages/Placeholder";
+import Maintenance from "./pages/Maintenance";
 
 // Public routes redirect to the app if already signed in.
 function PublicOnly({ children }) {
@@ -32,7 +33,7 @@ export default function App() {
             <Route path="/assets" element={<Placeholder title="Asset Registry" owner="C" />} />
             <Route path="/allocation" element={<Placeholder title="Allocation & Transfer" owner="A" />} />
             <Route path="/booking" element={<Placeholder title="Resource Booking" owner="B" />} />
-            <Route path="/maintenance" element={<Placeholder title="Maintenance" owner="D" />} />
+            <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/audit" element={<Placeholder title="Audit" owner="A" />} />
             <Route path="/reports" element={<Placeholder title="Reports" owner="C" />} />
             <Route path="/org" element={<Placeholder title="Org Setup" owner="C" />} />
