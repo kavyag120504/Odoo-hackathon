@@ -11,6 +11,7 @@ import Booking from "./pages/Booking";
 import Notifications from "./pages/Notifications";
 import Dashboard from "./pages/Dashboard";
 import { AssetRegistryPage, OrgSetupPage, ReportsPage } from "./pages/index";
+import Allocation from "./pages/Allocation";
 
 // Public routes redirect to the app if already signed in.
 function PublicOnly({ children }) {
@@ -38,7 +39,7 @@ export default function App() {
           >
             <Route path="/" element={<Dashboard />} />
             <Route path="/assets" element={<AssetRegistryPage />} />
-            <Route path="/allocation" element={<Placeholder title="Allocation & Transfer" owner="A" />} />
+            <Route path="/allocation" element={<Allocation />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/audit" element={<Placeholder title="Audit" owner="A" />} />

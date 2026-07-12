@@ -12,6 +12,33 @@ from app.schemas.allocation import AllocationCreate, AllocationResponse
 
 router = APIRouter(prefix="/allocations", tags=["Allocations"])
 
+
+@router.get("")
+def list_allocations(active_only: bool = True, db: Session = Depends(get_db)):
+    """Active allocations, enriched with holder name — the frontend needs the
+    allocation id + holder employee id to drive transfers and returns."""
+    q = db.query(Allocation)
+    if active_only:
+        q = q.filter(Allocation.status == AllocationStatus.ACTIVE.value)
+    out = []
+    for a in q.order_by(Allocation.id.desc()).all():
+        emp = db.get(Employee, a.employee_id) if a.employee_id else None
+        dept = db.get(Department, a.department_id) if a.department_id else None
+        asset = db.get(Asset, a.asset_id)
+        out.append({
+            "id": a.id,
+            "asset_id": a.asset_id,
+            "asset_name": asset.name if asset else None,
+            "employee_id": a.employee_id,
+            "department_id": a.department_id,
+            "holder_name": emp.name if emp else (dept.name if dept else None),
+            "status": a.status,
+            "allocated_at": a.allocated_at,
+            "expected_return_date": a.expected_return_date,
+        })
+    return out
+
+
 @router.post("", response_model=AllocationResponse, status_code=status.HTTP_201_CREATED)
 def allocate_asset(allocation_in: AllocationCreate, db: Session = Depends(get_db)):
     # 1. Validation: Must have either employee_id or department_id

@@ -12,6 +12,30 @@ from app.schemas.return_req import ReturnRequestCreate, ReturnRequestResponse, R
 
 router = APIRouter(prefix="/returns", tags=["Returns"])
 
+
+@router.get("")
+def list_returns(db: Session = Depends(get_db)):
+    """All return requests, enriched with asset + requester names for the UI."""
+    out = []
+    for r in db.query(ReturnRequest).order_by(ReturnRequest.id.desc()).all():
+        alloc = db.get(Allocation, r.allocation_id)
+        asset = db.get(Asset, alloc.asset_id) if alloc else None
+        requester = db.get(Employee, r.requested_by_id) if r.requested_by_id else None
+        out.append({
+            "id": r.id,
+            "allocation_id": r.allocation_id,
+            "asset_id": alloc.asset_id if alloc else None,
+            "asset_name": asset.name if asset else None,
+            "requested_by_id": r.requested_by_id,
+            "requester_name": requester.name if requester else None,
+            "employee_notes": r.employee_notes,
+            "manager_notes": r.manager_notes,
+            "status": r.status,
+            "created_at": r.created_at,
+        })
+    return out
+
+
 @router.post("", response_model=ReturnRequestResponse, status_code=status.HTTP_201_CREATED)
 def initiate_return(return_in: ReturnRequestCreate, db: Session = Depends(get_db)):
     # 1. Verify allocation

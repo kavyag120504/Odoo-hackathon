@@ -12,6 +12,30 @@ from app.schemas.transfer import TransferRequestCreate, TransferRequestResponse,
 
 router = APIRouter(prefix="/transfers", tags=["Transfers"])
 
+
+@router.get("")
+def list_transfers(db: Session = Depends(get_db)):
+    """All transfer requests, enriched with asset + employee names for the UI."""
+    out = []
+    for t in db.query(TransferRequest).order_by(TransferRequest.id.desc()).all():
+        asset = db.get(Asset, t.asset_id)
+        frm = db.get(Employee, t.from_employee_id) if t.from_employee_id else None
+        to = db.get(Employee, t.to_employee_id) if t.to_employee_id else None
+        out.append({
+            "id": t.id,
+            "asset_id": t.asset_id,
+            "asset_name": asset.name if asset else None,
+            "from_employee_id": t.from_employee_id,
+            "from_name": frm.name if frm else None,
+            "to_employee_id": t.to_employee_id,
+            "to_name": to.name if to else None,
+            "reason": t.reason,
+            "status": t.status,
+            "created_at": t.created_at,
+        })
+    return out
+
+
 @router.post("", response_model=TransferRequestResponse, status_code=status.HTTP_201_CREATED)
 def create_transfer_request(transfer_in: TransferRequestCreate, db: Session = Depends(get_db)):
     # 1. Verify the asset exists and is currently allocated
